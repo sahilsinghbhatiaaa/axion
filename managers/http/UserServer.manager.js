@@ -2,6 +2,7 @@ const http              = require('http');
 const express           = require('express');
 const cors              = require('cors');
 const app               = express();
+const SchoolManager = require('../school/SchoolManager');
 
 module.exports = class UserServer {
     constructor({config, managers}){
@@ -20,6 +21,7 @@ module.exports = class UserServer {
         app.use(express.json());
         app.use(express.urlencoded({ extended: true}));
         app.use('/static', express.static('public'));
+        app.use('/api/schools', new SchoolManager().router());
 
         /** an error handler */
         app.use((err, req, res, next) => {
