@@ -5,7 +5,7 @@ const app               = express();
 const SchoolManager = require('../schools/SchoolManager');
 const UserManager = require('../users/UserManager')
 const ClassroomManager = require('../classrooms/ClassroomManager')
-// const StudentManager = require('../classrooms/StudentManager')
+const StudentManager = require('../students/StudentManager')
 
 module.exports = class UserServer {
     constructor({config, managers}){
@@ -27,6 +27,7 @@ module.exports = class UserServer {
         app.use('/api/v1/school', new SchoolManager().router());
         app.use('/api/v1/user', new UserManager().router());
         app.use('/api/v1/classroom', new ClassroomManager().router());
+        app.use('/api/v1/student', new StudentManager().router());
 
         /** an error handler */
         app.use((err, req, res, next) => {
