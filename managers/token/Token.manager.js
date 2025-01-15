@@ -1,6 +1,7 @@
 const jwt        = require('jsonwebtoken');
 const { nanoid } = require('nanoid');
 const md5        = require('md5');
+const config = require('../../config/index.config')
 
 
 module.exports = class TokenManager {
@@ -25,11 +26,12 @@ module.exports = class TokenManager {
      * long token contains immutable data and long lived
      * master key must exists on any device to create short tokens
      */
-    genLongToken({userId, userKey}){
+    genLongToken({userId, userKey, userRole}){
         return jwt.sign(
             { 
                 userKey, 
                 userId,
+                userRole
             }, 
             this.config.dotEnv.LONG_TOKEN_SECRET, 
             {expiresIn: this.longTokenExpiresIn

@@ -1,0 +1,195 @@
+API
+
+Database agnostic make
+
+user_table : {
+    username, password (hashed), role (default - read only), email
+}
+
+api/v1/user/create -> by default creates a read only user
+api/v1/user/login -> returns user_id, jwt, role
+
+Add required fields in header -> User ID and Role Type for redundant auth 
+
+Create middleware for auth for all routes -> Mainly RBAC and Token Expiry , Refresh Tokens / (can fetch short lived tokens from long token)
+Mention this clearly inside documentation
+Malicious user prevention by Role Type in Header
+
+roles: [superadmins, admin, readOnly (Self)] -> Show 403 with unauth access
+
+Schools:
+{
+  "_id": ObjectId, // Unique identifier for the school
+  "name": String, // Name of the school
+  "address": String, // School address
+  "contact": {
+    "phone": String,
+    "email": String
+  },
+  "createdBy": ObjectId, // Superadmin who created the school
+  "profile": {
+    "establishedYear": Number,
+    "website": String,
+    "additionalInfo": String
+  },
+  "createdAt": Date,
+  "updatedAt": Date
+}
+
+
+Classrooms:
+{
+  "_id": ObjectId, // Unique identifier for the classroom
+  "name": String, // Name or identifier for the classroom (e.g., "Grade 1")
+  "schoolId": ObjectId, // Reference to the parent school
+  "capacity": Number, // Maximum number of students
+  "resources": [String], // List of resources (e.g., "Projector", "Computers")
+  "managedBy": ObjectId, // Administrator responsible for this classroom
+  "createdAt": Date,
+  "updatedAt": Date
+}
+
+Students:
+{
+  "_id": ObjectId, // Unique identifier for the student
+  "firstName": String,
+  "lastName": String,
+  "dob": Date, // Date of birth
+  "schoolId": ObjectId, // Reference to the parent school
+  "classroomId": ObjectId, // Reference to the assigned classroom
+  "enrollmentDate": Date,
+  "transferHistory": [
+    {
+      "fromClassroomId": ObjectId,
+      "toClassroomId": ObjectId,
+      "transferDate": Date
+    }
+  ],
+  "profile": {
+    "address": String,
+    "parentContact": {
+      "phone": String,
+      "email": String
+    }
+  },
+  "createdAt": Date,
+  "updatedAt": Date
+}
+
+
+
+api/v1/schools -> POST
+{
+  "name": "ABC School",
+  "address": "123 Main Street",
+  "contact": {
+    "phone": "123-456-7890",
+    "email": "contact@abcschool.com"
+  },
+  "profile": {
+    "establishedYear": 1990,
+    "website": "http://abcschool.com"
+  }
+}
+
+api/v1/schools -> GET
+[
+  {
+    "_id": "schoolId",
+    "name": "ABC School",
+    "address": "123 Main Street",
+    "contact": { "phone": "123-456-7890", "email": "contact@abcschool.com" },
+    "profile": { "establishedYear": 1990, "website": "http://abcschool.com" }
+  }
+]
+
+api/v1/schools?id=1 -> GET
+
+{
+  "_id": "schoolId",
+  "name": "ABC School",
+  "address": "123 Main Street",
+  "contact": { "phone": "123-456-7890", "email": "contact@abcschool.com" },
+  "profile": { "establishedYear": 1990, "website": "http://abcschool.com" }
+}
+
+api/v1/schools?id=1 -> PUT
+
+{
+  "name": "Updated School Name",
+  "address": "Updated Address"
+}
+
+api/v1/school?id=1 -> DELETE
+
+
+------------------------------------------------------------------
+
+api/v1/classroom -> POST
+{
+  "name": "Grade 1",
+  "schoolId": "schoolId",
+  "capacity": 30,
+  "resources": ["Projector", "Whiteboard"]
+}
+
+
+api/v1/classroom -> GET
+
+
+[
+  {
+    "_id": "classroomId",
+    "name": "Grade 1",
+    "capacity": 30,
+    "resources": ["Projector", "Whiteboard"]
+  }
+]
+
+/api/classrooms/:id -> PUT
+
+{
+  "capacity": 35,
+  "resources": ["Projector", "Smartboard"]
+}
+
+/api/classrooms/:id -> DELETE
+
+-------------------------------------------
+
+/api/students -> POST
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "dob": "2010-05-15",
+  "schoolId": "schoolId",
+  "classroomId": "classroomId",
+  "enrollmentDate": "2023-01-01",
+  "profile": {
+    "address": "456 Elm Street",
+    "parentContact": { "phone": "987-654-3210", "email": "parent@example.com" }
+  }
+}
+
+
+
+/api/classrooms/:classroomId/students -> GET
+
+[
+  {
+    "_id": "studentId",
+    "firstName": "John",
+    "lastName": "Doe"
+  }
+]
+
+
+/api/students/:id/transfer -> PUT
+
+{
+  "toClassroomId": "newClassroomId",
+  "transferDate": "2023-06-01"
+}
+
+
+/api/students/:id/transfer -> DELETE
