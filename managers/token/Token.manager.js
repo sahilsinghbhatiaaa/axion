@@ -1,14 +1,15 @@
 const jwt        = require('jsonwebtoken');
 const { nanoid } = require('nanoid');
 const md5        = require('md5');
+const config = require('../../config/index.config')
 
 
 module.exports = class TokenManager {
 
     constructor({config}){
         this.config              = config;
-        this.longTokenExpiresIn  = '3y';
-        this.shortTokenExpiresIn = '1y';
+        this.longTokenExpiresIn  = '1h';
+        this.shortTokenExpiresIn = '15m';
 
         this.httpExposed         = ['v1_createShortToken'];
     }
@@ -25,11 +26,12 @@ module.exports = class TokenManager {
      * long token contains immutable data and long lived
      * master key must exists on any device to create short tokens
      */
-    genLongToken({userId, userKey}){
+    genLongToken({userId, userKey, userRole}){
         return jwt.sign(
             { 
                 userKey, 
                 userId,
+                userRole
             }, 
             this.config.dotEnv.LONG_TOKEN_SECRET, 
             {expiresIn: this.longTokenExpiresIn
@@ -64,9 +66,7 @@ module.exports = class TokenManager {
     v1_createShortToken({__longToken, __device}){
 
 
-        let decoded = __longToken;
-        console.log(decoded);
-        
+        const decoded = jwt.verify(__longToken, config.dotEnv.LONG_TOKEN_SECRET);
         let shortToken = this.genShortToken({
             userId: decoded.userId, 
             userKey: decoded.userKey,
