@@ -39,7 +39,7 @@ Schools:
 
 Classrooms:
 {
-  "_id": ObjectId, // Unique identifier for the classroom
+  "id": clid-uuid, // Unique identifier for the classroom
   "name": String, // Name or identifier for the classroom (e.g., "Grade 1")
   "schoolId": ObjectId, // Reference to the parent school
   "capacity": Number, // Maximum number of students

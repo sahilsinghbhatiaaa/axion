@@ -4,6 +4,8 @@ const cors              = require('cors');
 const app               = express();
 const SchoolManager = require('../schools/SchoolManager');
 const UserManager = require('../users/UserManager')
+const ClassroomManager = require('../classrooms/ClassroomManager')
+// const StudentManager = require('../classrooms/StudentManager')
 
 module.exports = class UserServer {
     constructor({config, managers}){
@@ -22,8 +24,9 @@ module.exports = class UserServer {
         app.use(express.json());
         app.use(express.urlencoded({ extended: true}));
         app.use('/static', express.static('public'));
-        app.use('/api/v1/schools', new SchoolManager().router());
-        app.use('/api/v1/users', new UserManager().router());
+        app.use('/api/v1/school', new SchoolManager().router());
+        app.use('/api/v1/user', new UserManager().router());
+        app.use('/api/v1/classroom', new ClassroomManager().router());
 
         /** an error handler */
         app.use((err, req, res, next) => {
