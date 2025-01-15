@@ -5,14 +5,24 @@ const Classroom = require('../models/classroom.model');
 const School = require('../models/school.model');
 const tokenManager = require('../token/Token.manager');
 const config = require('../../config/index.config');
+const { authorize } = require('../../middleware/authorization'); // Import the middleware
+const rateLimit = require('express-rate-limit'); // Import express-rate-limit
+
 
 class ClassroomManager {
     constructor() {
         this.config = config;
-        router.post('/', this.createClassroom.bind(this));
-        router.get('/', this.getClassroom.bind(this)); // Endpoint for fetching classrooms
-        router.put('/', this.updateClassroom.bind(this));
-        router.delete('/', this.deleteByID.bind(this))
+
+        const classRoomRateLimit = rateLimit({
+            windowMs: 15 * 60 * 1000, // 15 minutes
+            max: 5, // Limit each IP to 5 requests per window
+            message: 'Too many attempts, please try again after 15 minutes.',
+        });
+        
+        router.post('/', classRoomRateLimit, authorize(['admin', 'superadmin']), this.createClassroom.bind(this));
+        router.get('/', classRoomRateLimit, authorize(['admin', 'superadmin']), this.getClassroom.bind(this)); // Endpoint for fetching classrooms
+        router.put('/', classRoomRateLimit,  authorize(['admin', 'superadmin']), this.updateClassroom.bind(this));
+        router.delete('/', classRoomRateLimit, authorize(['admin', 'superadmin']),this.deleteByID.bind(this))
     }
 
     async createClassroom(req, res) {

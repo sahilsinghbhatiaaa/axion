@@ -4,16 +4,55 @@ const router = express.Router();
 const User = require('../models/user.model');
 const tokenManager = require('../token/Token.manager');
 const config = require('../../config/index.config');
+const jwt = require('jsonwebtoken'); // Import jwt for token verification
+const rateLimit = require('express-rate-limit'); // Import express-rate-limit
+
 
 class UserManager {
     constructor() {
         this.config = config;
-        router.post('/login', this.loginUser.bind(this));
+
+        // Apply rate limiting to login and refreshToken routes
+        const loginRateLimiter = rateLimit({
+            windowMs: 15 * 60 * 1000, // 15 minutes
+            max: 5, // Limit each IP to 5 requests per window
+            message: 'Too many login attempts, please try again after 15 minutes.',
+        });
+
+        const refreshTokenRateLimiter = rateLimit({
+            windowMs: 15 * 60 * 1000, // 15 minutes
+            max: 5, // Limit each IP to 5 requests per window
+            message: 'Too many refresh token requests, please try again after 15 minutes.',
+        });
+
+        router.post('/login',loginRateLimiter, this.loginUser.bind(this));
+        router.post('/refreshtoken',refreshTokenRateLimiter, this.refreshToken.bind(this));
         router.post('/', this.createUser.bind(this));
-        router.get('/', this.testView.bind(this))
     }
 
-    async testView(req,res) {
+    async refreshToken(req,res) {
+        const { longToken } = req.body;
+
+        if (!longToken) {
+            return res.status(403).json({ error: 'Refresh token is required' });
+        }
+
+        try {
+            // 1. Verify the refresh token using the refresh token secret
+            const decoded = jwt.verify(longToken, config.dotEnv.LONG_TOKEN_SECRET);
+            
+            const token = new tokenManager({ config: this.config });
+            // 2. Generate a new short-lived access token (e.g., 15 minutes)
+            const newAccessToken=  token.v1_createShortToken({ __longToken: longToken, __device: navigator.userAgent });
+
+            // 3. Return the new access token to the client
+            return res.status(200).json({
+                shortToken: newAccessToken.shortToken,
+            });
+        } catch (error) {
+            return res.status(403).json({ error: 'Invalid or expired refresh token', details: error.message });
+        }
+        
     }
 
     async loginUser(req, res) {
@@ -58,6 +97,7 @@ class UserManager {
                 message: 'Login successful.',
                 data: {
                     username: user.username,
+                    role: user.role,
                     longToken,
                     shortToken: shortToken.shortToken,
                 },

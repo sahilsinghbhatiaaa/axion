@@ -8,8 +8,8 @@ module.exports = class TokenManager {
 
     constructor({config}){
         this.config              = config;
-        this.longTokenExpiresIn  = '3y';
-        this.shortTokenExpiresIn = '1y';
+        this.longTokenExpiresIn  = '1h';
+        this.shortTokenExpiresIn = '15m';
 
         this.httpExposed         = ['v1_createShortToken'];
     }
@@ -66,9 +66,7 @@ module.exports = class TokenManager {
     v1_createShortToken({__longToken, __device}){
 
 
-        let decoded = __longToken;
-        console.log(decoded);
-        
+        const decoded = jwt.verify(__longToken, config.dotEnv.LONG_TOKEN_SECRET);
         let shortToken = this.genShortToken({
             userId: decoded.userId, 
             userKey: decoded.userKey,

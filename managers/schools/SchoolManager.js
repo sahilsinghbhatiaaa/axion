@@ -4,14 +4,24 @@ const router = express.Router();
 const School = require('../models/school.model');
 const tokenManager = require('../token/Token.manager');
 const config = require('../../config/index.config');
+const { authorize } = require('../../middleware/authorization'); // Import the middleware
+const rateLimit = require('express-rate-limit'); // Import express-rate-limit
+
 
 class SchoolManager {
     constructor() {
         this.config = config;
-        router.post('/', this.createSchool.bind(this));
-        router.get('/', this.getAllSchool.bind(this));
-        router.put('/', this.updateSchool.bind(this))
-        router.delete('/', this.deleteSchool.bind(this))
+
+        const schoolRateLimit = rateLimit({
+                    windowMs: 15 * 60 * 1000, // 15 minutes
+                    max: 5, // Limit each IP to 5 requests per window
+                    message: 'Too many attempts, please try again after 15 minutes.',
+                });
+        
+        router.post('/',schoolRateLimit,authorize(['superadmin']), this.createSchool.bind(this));
+        router.get('/',schoolRateLimit, authorize(['superadmin']),this.getAllSchool.bind(this));
+        router.put('/',schoolRateLimit,authorize([ 'superadmin']), this.updateSchool.bind(this))
+        router.delete('/',schoolRateLimit,authorize([ 'superadmin']), this.deleteSchool.bind(this))
     }
 
     async createSchool(req, res) {
